@@ -1,0 +1,37 @@
+volumes:
+  mytheresa_db:
+    driver: local
+
+networks:
+  backend:
+    driver: bridge
+
+services:
+  mytheresa_backend_php:
+    build: .
+    container_name: mytheresa_backend_php
+    volumes:
+      - .:/var/www/html/
+      - ./docker-files/vhost.conf:/etc/apache2/sites-available/000-default.conf
+    networks:
+      - backend
+    ports:
+      - ${API_EXPOSED_PORT}:80
+    depends_on:
+      - mytheresa_backend_mysql
+    environment:
+      - TZ=UTC
+
+  mytheresa_backend_mysql:
+    image: mariadb:10.7
+    container_name: mytheresa_backend_mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=mytheresa
+      - TZ=UTC
+    volumes:
+      - mytheresa_db:/var/lib/mysql
+      - ./docker-files/mytheresa.sql:/docker-entrypoint-initdb.d/1_db.sql
+      - ./docker-files/mytheresa_test.sql:/docker-entrypoint-initdb.d/2_testdb.sql
+    networks:
+      - backend
